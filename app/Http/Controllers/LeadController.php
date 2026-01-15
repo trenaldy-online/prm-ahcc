@@ -65,26 +65,23 @@ class LeadController extends Controller
         $lead = Lead::where('phone', $cleanPhone)->first();
 
         if ($lead) {
-            // === SKENARIO: PASIEN LAMA KEMBALI ===
+            // === SKENARIO: PASIEN LAMA KEMBALI (REAKTIVASI) ===
             $oldStatus = $lead->status;
             $oldName = $lead->name;
             
-            // Update data dengan info baru & NOMOR YANG DIBERSIHKAN
             $lead->update([
                 'status' => 'New',
                 'updated_at' => now(),
-                'phone' => $cleanPhone,     // <--- Update format nomor agar rapi
+                'phone' => $cleanPhone,
                 'name' => $request->name,           
                 'diagnosis' => $request->diagnosis, 
                 'complaint' => $request->complaint  
             ]);
 
-            // Cek perubahan nama untuk log
             $nameNote = ($oldName !== $request->name) 
                 ? "Nama diperbarui dari **$oldName** menjadi **{$request->name}**." 
                 : "Nama tetap sama.";
 
-            // Catat Log
             LeadActivity::create([
                 'lead_id' => $lead->id,
                 'user_id' => Auth::id(),
@@ -98,29 +95,42 @@ class LeadController extends Controller
         // === SKENARIO: PASIEN BENAR-BENAR BARU ===
         else {
             
-            // Cek Tracking Session (Optional)
-            $trackingId = null;
-            if($request->filled('ref_code')) {
-                $session = \App\Models\TrackingSession::where('ref_code', $request->ref_code)->first();
-                $trackingId = $session ? $session->id : null;
+            // --- LOGIKA BARU: SMART ATTRIBUTION (COOKIE FALLBACK) ---
+            // 1. Coba ambil dari Input Form (Prioritas 1)
+            $refCode = $request->input('ref_code');
+
+            // 2. Jika form kosong, coba ambil dari Cookie Browser (Prioritas 2)
+            if (!$refCode) {
+                $refCode = $request->cookie('ref_code');
             }
 
-            // Buat Lead Baru dengan CLEAN PHONE
+            // 3. Cari Data Tracking Session
+            $trackingId = null;
+            if ($refCode) {
+                // Cari session berdasarkan ref_code yang ditemukan
+                $session = \App\Models\TrackingSession::where('ref_code', $refCode)->first();
+                $trackingId = $session ? $session->id : null;
+            }
+            // --------------------------------------------------------
+
+            // Buat Lead Baru
             $lead = Lead::create([
                 'name' => $request->name,
-                'phone' => $cleanPhone,     // <--- Simpan yang sudah bersih (62xxx)
+                'phone' => $cleanPhone,
                 'diagnosis' => $request->diagnosis,
                 'complaint' => $request->complaint,
                 'status' => 'New',
-                'tracking_session_id' => $trackingId
+                'tracking_session_id' => $trackingId // Sambungkan ID tracking disini
             ]);
 
             // Catat Log Awal
+            $sourceLog = $trackingId ? "Sumber: Iklan/Tracking ($refCode)" : "Sumber: Organik/Direct";
+            
             LeadActivity::create([
                 'lead_id' => $lead->id,
                 'user_id' => Auth::id(),
                 'type' => 'note',
-                'details' => "Pasien Baru ditambahkan."
+                'details' => "Pasien Baru ditambahkan. $sourceLog"
             ]);
 
             return redirect()->back()->with('success', 'Lead Baru berhasil dibuat!');
@@ -130,13 +140,33 @@ class LeadController extends Controller
     // Update Status & Catatan
     public function update(Request $request, Lead $lead)
     {
-        // Update data sesuai inputan dari Modal
-        $lead->update([
+        // 1. Siapkan data yang mau diupdate
+        $data = [
             'status' => $request->status,
             'admin_notes' => $request->admin_notes,
-            // Kita juga izinkan edit diagnosa jika ada info baru
             'diagnosis' => $request->diagnosis,
-        ]);
+        ];
+
+        // 2. Jika statusnya 'Lost', simpan juga alasannya
+        if ($request->status === 'Lost') {
+            $data['lost_reason'] = $request->lost_reason;
+        } else {
+            // Jika bukan lost (misal balik ke New), hapus alasan lost sebelumnya agar data bersih
+            $data['lost_reason'] = null;
+        }
+
+        // 3. Eksekusi Update
+        $lead->update($data);
+
+        // 4. Catat Log (Tambahan biar rapi)
+        if ($request->status === 'Lost' && $request->filled('lost_reason')) {
+            \App\Models\LeadActivity::create([
+                'lead_id' => $lead->id,
+                'user_id' => Auth::id(),
+                'type' => 'status_change',
+                'details' => "⛔ **Lost:** " . $request->lost_reason
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Status pasien berhasil diperbarui!');
     }

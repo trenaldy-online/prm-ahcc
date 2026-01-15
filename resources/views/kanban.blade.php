@@ -43,10 +43,19 @@
         </div>
         <nav class="flex-1 px-4 space-y-1 overflow-y-auto">
             <p class="px-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 mt-2">Main Menu</p>
-            <a href="#" class="flex items-center gap-3 px-3 py-2 bg-[#27272a] text-white rounded-lg transition border border-gray-700/50">
-                <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            
+            <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-3 py-2 {{ request()->routeIs('dashboard') ? 'bg-[#27272a] text-white border border-gray-700/50' : 'text-gray-400 hover:text-white hover:bg-[#1c1c1f]' }} rounded-lg transition">
+                <svg class="w-4 h-4 {{ request()->routeIs('dashboard') ? 'text-green-500' : 'text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                 <span class="text-sm font-medium">Kanban Board</span>
             </a>
+
+            <a href="{{ route('analytics') }}" class="flex items-center gap-3 px-3 py-2 {{ request()->routeIs('analytics') ? 'bg-[#27272a] text-white border border-gray-700/50' : 'text-gray-400 hover:text-white hover:bg-[#1c1c1f]' }} rounded-lg transition group">
+                <svg class="w-4 h-4 {{ request()->routeIs('analytics') ? 'text-green-500' : 'text-gray-500 group-hover:text-gray-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <span class="text-sm font-medium">Analytics</span>
+            </a>
+
             <a href="{{ route('leads.export') }}" class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#1c1c1f] rounded-lg transition group">
                 <svg class="w-4 h-4 text-gray-500 group-hover:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                 <span class="text-sm font-medium">Export CSV</span>
@@ -268,6 +277,16 @@
                         <option value="Lost">Lost (❌)</option>
                     </select>
                 </div>
+                <div id="lostReasonDiv" class="hidden mt-3 p-3 bg-red-900/10 border border-red-900/30 rounded-lg">
+                    <label class="block text-xs font-bold text-red-400 mb-1">Kenapa Gagal / Lost?</label>
+                    <select name="lost_reason" id="modalLostReason" class="w-full bg-[#27272a] border border-red-900/50 text-gray-300 rounded-lg px-3 py-2 text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500">
+                        <option value="">-- Pilih Alasan --</option>
+                        @foreach($globalLostReasons as $reason)
+                            <option value="{{ $reason->title }}">{{ $reason->title }}</option>
+                        @endforeach
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-400 mb-1">Diagnosis</label>
                     <input type="text" name="diagnosis" id="modalDiagnosis" class="w-full bg-[#27272a] border border-gray-600 rounded-lg px-3 py-2 text-sm text-white focus:border-green-500">
@@ -476,101 +495,36 @@
             
             containers.forEach(function (container) {
                 new Sortable(container, {
-                    group: 'kanban', // Agar bisa pindah antar kolom
+                    group: 'kanban',
                     animation: 150,
-                    ghostClass: 'sortable-ghost', // Class saat sedang didrag (transparan)
-                    delay: 100, // Delay sedikit untuk mobile agar tidak scroll terkunci
+                    ghostClass: 'sortable-ghost',
+                    delay: 100,
                     delayOnTouchOnly: true,
-                    
-                    // SAAT KARTU DILEPAS (DROP)
                     onEnd: function (evt) {
-                        const itemEl = evt.item; // Elemen kartu
-                        const newStatus = evt.to.getAttribute('data-status'); // Kolom tujuan
-                        const leadId = itemEl.getAttribute('data-id'); // ID Pasien
+                        const itemEl = evt.item;
+                        const newStatus = evt.to.getAttribute('data-status');
+                        const leadId = itemEl.getAttribute('data-id');
                         
-                        // Kirim data ke Laravel via AJAX
                         fetch('{{ route("leads.update-status-ajax") }}', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                             },
-                            body: JSON.stringify({
-                                id: leadId,
-                                status: newStatus
-                            })
+                            body: JSON.stringify({ id: leadId, status: newStatus })
                         })
                         .then(response => response.json())
                         .then(data => {
                             if(data.success) {
-                                console.log('✅ Status updated to: ' + newStatus);
-                                // Update hitungan angka di header (Opsional/Sederhana)
                                 updateCounts();
                             }
-                        })
-                        .catch(error => console.error('Error:', error));
+                        });
                     }
                 });
             });
         });
 
-    // --- LOGIC TASK MODAL (Versi Lengkap 4 Tab) ---
-    function openTaskModal(tabName) {
-        const modal = document.getElementById('taskModal');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        
-        // Buka tab yang diminta saat tombol diklik
-        switchTab(tabName);
-    }
-
-    function closeTaskModal() {
-        const modal = document.getElementById('taskModal');
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
-    }
-
-    function switchTab(tabName) {
-        // ARRAY TAB YANG LENGKAP
-        const allTabs = ['overdue', 'today', 'tomorrow', 'unlabelled'];
-
-        // 1. Sembunyikan semua konten & Reset tombol
-        allTabs.forEach(name => {
-            // Sembunyikan div konten
-            document.getElementById('content-' + name).classList.add('hidden');
-            
-            // Reset warna tombol tab jadi abu-abu
-            const btn = document.getElementById('tab-' + name);
-            btn.classList.remove('text-white', 'border-green-500', 'text-yellow-500', 'border-yellow-500', 'text-blue-500', 'border-blue-500', 'text-red-500', 'border-red-500'); 
-            btn.classList.add('text-gray-500', 'border-transparent');
-        });
-
-        // 2. Tampilkan konten yang dipilih
-        document.getElementById('content-' + tabName).classList.remove('hidden');
-        
-        // 3. Highlight tombol tab aktif (Beri warna sesuai kategori)
-        const activeBtn = document.getElementById('tab-' + tabName);
-        activeBtn.classList.remove('text-gray-500', 'border-transparent');
-        
-        // Logic pewarnaan tab aktif
-        if(tabName === 'overdue') activeBtn.classList.add('text-white', 'border-red-500');
-        else if(tabName === 'today') activeBtn.classList.add('text-white', 'border-blue-500');
-        else if(tabName === 'unlabelled') activeBtn.classList.add('text-white', 'border-yellow-500');
-        else activeBtn.classList.add('text-white', 'border-gray-500');
-    }
-
-    // Tutup modal jika klik di luar area
-    window.onclick = function(event) {
-        const taskModal = document.getElementById('taskModal');
-        const createModal = document.getElementById('createModal');
-        const editModal = document.getElementById('editModal');
-        
-        if (event.target == taskModal) closeTaskModal();
-        if (event.target == createModal) closeCreateModal();
-        if (event.target == editModal) closeEditModal();
-    }
-
-        // Update jumlah kartu secara visual (Simpel)
+        // --- UPDATE JUMLAH KARTU ---
         function updateCounts() {
             document.querySelectorAll('.kanban-col').forEach(col => {
                 const count = col.querySelectorAll('.kanban-card').length;
@@ -578,7 +532,7 @@
             });
         }
 
-        // --- 2. SCRIPT MODAL (Sama seperti sebelumnya) ---
+        // --- 2. SCRIPT MODAL CREATE ---
         function openCreateModal(status = null) {
             document.getElementById('createModal').classList.remove('hidden');
             document.getElementById('createModal').classList.add('flex');
@@ -587,22 +541,97 @@
             document.getElementById('createModal').classList.remove('flex');
             document.getElementById('createModal').classList.add('hidden');
         }
+
+        // --- 3. SCRIPT MODAL EDIT (YANG SUDAH DIPERBAIKI) ---
+        
+        // A. Event Listener untuk Dropdown Status (Agar muncul saat dipilih 'Lost')
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusSelect = document.getElementById('modalStatus');
+            if(statusSelect) {
+                statusSelect.addEventListener('change', function() {
+                    const reasonDiv = document.getElementById('lostReasonDiv');
+                    const reasonInput = document.getElementById('modalLostReason');
+                    
+                    if (this.value === 'Lost') {
+                        reasonDiv.classList.remove('hidden'); // Munculkan
+                        reasonInput.setAttribute('required', 'required'); // Wajib isi
+                    } else {
+                        reasonDiv.classList.add('hidden'); // Sembunyikan
+                        reasonInput.removeAttribute('required');
+                        reasonInput.value = ''; // Reset
+                    }
+                });
+            }
+        });
+
+        // B. Fungsi Membuka Modal Edit (Logika Lost Reason ada DI DALAM sini)
         function openEditModal(lead) {
+            // Isi form dengan data pasien
             document.getElementById('modalName').value = lead.name;
             document.getElementById('modalStatus').value = lead.status;
             document.getElementById('modalDiagnosis').value = lead.diagnosis || '';
             document.getElementById('modalNotes').value = lead.admin_notes || '';
+            
+            // --- LOGIKA ALASAN LOST (DIPERBAIKI) ---
+            const reasonDiv = document.getElementById('lostReasonDiv');
+            const reasonSelect = document.getElementById('modalLostReason');
+            
+            // Cek apakah status pasien saat ini adalah Lost?
+            if (lead.status === 'Lost') {
+                reasonDiv.classList.remove('hidden'); // Jika ya, munculkan dropdown
+                reasonSelect.value = lead.lost_reason || ''; // Isi alasannya
+            } else {
+                reasonDiv.classList.add('hidden'); // Jika tidak, sembunyikan
+                reasonSelect.value = '';
+            }
+            // ----------------------------------------
+
             document.getElementById('editForm').action = '/leads/' + lead.id;
             document.getElementById('editModal').classList.remove('hidden');
             document.getElementById('editModal').classList.add('flex');
         }
+
         function closeEditModal() {
             document.getElementById('editModal').classList.remove('flex');
             document.getElementById('editModal').classList.add('hidden');
         }
+
+        // --- 4. SCRIPT MODAL TASK/REMINDER ---
+        function openTaskModal(tabName) {
+            document.getElementById('taskModal').classList.remove('hidden');
+            document.getElementById('taskModal').classList.add('flex');
+            switchTab(tabName);
+        }
+        function closeTaskModal() {
+            document.getElementById('taskModal').classList.remove('flex');
+            document.getElementById('taskModal').classList.add('hidden');
+        }
+        function switchTab(tabName) {
+            const allTabs = ['overdue', 'today', 'tomorrow', 'unlabelled'];
+            allTabs.forEach(name => {
+                document.getElementById('content-' + name).classList.add('hidden');
+                const btn = document.getElementById('tab-' + name);
+                btn.classList.remove('text-white', 'border-green-500', 'text-yellow-500', 'border-yellow-500', 'text-blue-500', 'border-blue-500', 'text-red-500', 'border-red-500'); 
+                btn.classList.add('text-gray-500', 'border-transparent');
+            });
+            document.getElementById('content-' + tabName).classList.remove('hidden');
+            const activeBtn = document.getElementById('tab-' + tabName);
+            activeBtn.classList.remove('text-gray-500', 'border-transparent');
+            
+            if(tabName === 'overdue') activeBtn.classList.add('text-white', 'border-red-500');
+            else if(tabName === 'today') activeBtn.classList.add('text-white', 'border-blue-500');
+            else if(tabName === 'unlabelled') activeBtn.classList.add('text-white', 'border-yellow-500');
+            else activeBtn.classList.add('text-white', 'border-gray-500');
+        }
+
+        // Tutup modal jika klik di luar
         window.onclick = function(event) {
-            if (event.target == document.getElementById('createModal')) closeCreateModal();
-            if (event.target == document.getElementById('editModal')) closeEditModal();
+            const taskModal = document.getElementById('taskModal');
+            const createModal = document.getElementById('createModal');
+            const editModal = document.getElementById('editModal');
+            if (event.target == taskModal) closeTaskModal();
+            if (event.target == createModal) closeCreateModal();
+            if (event.target == editModal) closeEditModal();
         }
     </script>
     

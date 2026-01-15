@@ -36,13 +36,18 @@
                 <span class="text-sm font-medium">WhatsApp Templates</span>
             </button>
 
+            <button onclick="switchSetting('lost-reasons')" id="btn-lost-reasons" class="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition text-gray-400 hover:text-white hover:bg-[#1c1c1f]">
+                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <span class="text-sm font-medium">Lost Reasons</span>
+            </button>
+
             <button onclick="switchSetting('profile')" id="btn-profile" class="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition text-gray-400 hover:text-white hover:bg-[#1c1c1f]">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                 <span class="text-sm font-medium">My Profile</span>
             </button>
 
             <button onclick="switchSetting('general')" id="btn-general" class="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition text-gray-400 hover:text-white hover:bg-[#1c1c1f]">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 <span class="text-sm font-medium">General</span>
             </button>
         </div>
@@ -123,6 +128,51 @@
                 </div>
             </div>
 
+            <div id="content-lost-reasons" class="hidden space-y-6 max-w-5xl mx-auto animate-fade-in">
+                <header class="mb-8 border-b border-gray-800 pb-4">
+                    <h1 class="text-2xl font-bold text-white">Alasan Lost (Gagal)</h1>
+                    <p class="text-sm text-gray-500 mt-1">Kelola opsi alasan yang muncul saat pasien ditandai sebagai 'Lost'.</p>
+                </header>
+
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                    <div class="bg-[#18181b] p-6 rounded-xl border border-gray-800 h-fit sticky top-6">
+                        <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-4">Tambah Alasan Baru</h2>
+                        <form action="{{ route('settings.reason.store') }}" method="POST" class="space-y-4">
+                            @csrf
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Judul Alasan</label>
+                                <input type="text" name="title" placeholder="Contoh: Harga Terlalu Mahal" required 
+                                    class="w-full bg-[#0e0e11] border border-gray-700 rounded p-2 text-sm text-white focus:border-red-500 placeholder-gray-600 transition">
+                            </div>
+                            <button type="submit" class="w-full bg-red-600 hover:bg-red-500 text-white px-4 py-2.5 rounded-lg text-sm font-bold transition shadow-lg shadow-red-900/20">
+                                Simpan Alasan
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="space-y-3">
+                        @if(isset($reasons) && $reasons->count() > 0)
+                            @foreach($reasons as $reason)
+                            <div class="bg-[#18181b] px-4 py-3 rounded-lg border border-gray-800 flex justify-between items-center group hover:border-gray-600 transition">
+                                <span class="text-sm text-gray-300 font-medium">{{ $reason->title }}</span>
+                                <form action="{{ route('settings.reason.destroy', $reason->id) }}" method="POST" onsubmit="return confirm('Hapus alasan ini? Data pasien yang sudah menggunakan alasan ini tidak akan berubah.')">
+                                    @csrf @method('DELETE')
+                                    <button class="text-gray-600 hover:text-red-500 p-2 rounded hover:bg-red-900/10 transition" title="Hapus">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </form>
+                            </div>
+                            @endforeach
+                        @else
+                            <div class="text-center py-16 border-2 border-dashed border-gray-800 rounded-xl bg-[#18181b]/50">
+                                <p class="text-gray-500 text-sm font-medium">Belum ada alasan tersimpan.</p>
+                                <p class="text-gray-600 text-xs mt-1">Gunakan form di kiri untuk menambah alasan.</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
             <div id="content-profile" class="hidden space-y-6 max-w-2xl mx-auto">
                 <header class="mb-8 border-b border-gray-800 pb-4">
                     <h1 class="text-2xl font-bold text-white">User Profile</h1>
@@ -158,9 +208,10 @@
     </main>
 
     <script>
+        // Fungsi Switch Tab (Tetap sama)
         function switchSetting(tabName) {
             // 1. Hide Semua Konten
-            ['whatsapp', 'profile', 'general'].forEach(name => {
+            ['whatsapp', 'lost-reasons', 'profile', 'general'].forEach(name => {
                 const content = document.getElementById('content-' + name);
                 if(content) content.classList.add('hidden');
                 
@@ -183,6 +234,16 @@
                 selectedBtn.classList.add('bg-[#27272a]', 'text-white', 'border', 'border-gray-700', 'shadow-sm');
             }
         }
+
+        // --- TAMBAHAN KODE: Auto Switch Tab saat Reload ---
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ambil data 'active_tab' dari session PHP. 
+            // Jika tidak ada session (akses biasa), default ke 'whatsapp'.
+            const activeTab = "{{ session('active_tab', 'whatsapp') }}";
+            
+            // Jalankan fungsi switch ke tab tersebut
+            switchSetting(activeTab);
+        });
     </script>
 
     @if(session('success'))

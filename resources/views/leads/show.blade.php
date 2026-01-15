@@ -57,6 +57,13 @@
                         <p class="text-white text-sm font-medium mt-1">{{ $lead->diagnosis ?? '-' }}</p>
                     </div>
 
+                    @if($lead->status === 'Lost' && $lead->lost_reason)
+                    <div class="bg-red-900/10 border border-red-900/30 p-2 rounded-lg">
+                        <label class="block text-[10px] text-red-400 uppercase font-bold">Alasan Lost</label>
+                        <p class="text-white text-sm mt-0.5">{{ $lead->lost_reason }}</p>
+                    </div>
+                    @endif
+
                     <div>
                         <label class="block text-[10px] text-gray-500 uppercase">Source / Iklan</label>
                         @if($lead->trackingSession)
@@ -159,9 +166,8 @@
                     if (!message) { alert("Pesan kosong!"); return; }
 
                     // 2. LOGGING KE SERVER (AJAX)
-                    // Kita pakai fetch untuk kirim data ke Laravel tanpa reload page
                     try {
-                        const csrfToken = document.querySelector('input[name="_token"]').value; // Ambil token dari form activity
+                        const csrfToken = document.querySelector('input[name="_token"]').value; 
                         
                         await fetch("{{ route('leads.log.wa', $lead->id) }}", {
                             method: "POST",
@@ -171,13 +177,12 @@
                             },
                             body: JSON.stringify({
                                 message: message,
-                                template_content: originalTemplateContent, // Untuk cek diedit/tidak
+                                template_content: originalTemplateContent, 
                                 template_name: selectedTemplateName
                             })
                         });
                     } catch (error) {
                         console.error("Gagal mencatat log:", error);
-                        // Lanjut saja, jangan hentikan proses kirim WA
                     }
 
                     // 3. BUKA WHATSAPP
@@ -185,7 +190,6 @@
                     window.open(`https://wa.me/${phone}?text=${encodedMsg}`, '_blank');
 
                     // 4. MUNCULKAN MODAL REMINDER
-                    // Ini trik UX: Admin pindah tab ke WA, pas balik ke sini Modal sudah muncul.
                     document.getElementById('reminderModal').classList.remove('hidden');
                     document.getElementById('reminderModal').classList.add('flex');
                 }
@@ -270,7 +274,6 @@
 
             <form action="{{ route('leads.reminder.update', $lead->id) }}" method="POST">
                 @csrf
-                
                 <div class="grid grid-cols-3 gap-3 mb-4">
                     <button type="submit" name="option" value="2days" class="bg-[#27272a] hover:bg-blue-600 hover:text-white text-gray-300 py-3 rounded-xl border border-gray-700 transition flex flex-col items-center gap-1 group">
                         <span class="text-xs font-bold uppercase">Lusa</span>
@@ -309,15 +312,51 @@
         </div>
     </div>
 
+    <div id="lostModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[70] backdrop-blur-sm">
+        <div class="bg-[#18181b] rounded-2xl shadow-2xl w-full max-w-md border border-gray-700 p-6">
+            
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+                <h3 class="text-lg font-bold text-white">Konfirmasi Gagal</h3>
+                <p class="text-sm text-gray-400 mt-1">Mengapa pasien ini tidak jadi/batal (Lost)?</p>
+            </div>
+
+            <form action="{{ route('leads.update', $lead->id) }}" method="POST">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="status" value="Lost">
+                
+                <div class="mb-5">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Pilih Alasan Utama</label>
+                    <select name="lost_reason" required class="w-full bg-[#0e0e11] border border-red-900/50 text-gray-300 rounded-lg px-4 py-3 text-sm focus:border-red-500 focus:outline-none">
+                        <option value="">-- Pilih Alasan --</option>
+                        @foreach($globalLostReasons as $reason)
+                            <option value="{{ $reason->title }}">{{ $reason->title }}</option>
+                        @endforeach
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button type="button" onclick="document.getElementById('lostModal').classList.add('hidden'); document.getElementById('lostModal').classList.remove('flex');" class="bg-[#27272a] hover:bg-gray-700 text-gray-300 py-2.5 rounded-lg text-sm font-bold transition">
+                        Batal
+                    </button>
+                    <button type="submit" class="bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-lg text-sm font-bold transition">
+                        Konfirmasi Lost
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="fixed bottom-6 right-6 z-40">
         @if($lead->status !== 'Lost' && $lead->status !== 'Converted')
-        <form action="{{ route('leads.lost', $lead->id) }}" method="POST" onsubmit="return confirm('Yakin tandai pasien ini sebagai Menghilang/Lost? Data tidak akan dihapus, hanya ganti status.')">
-            @csrf
-            <button type="submit" class="bg-[#18181b] hover:bg-red-900/80 text-gray-500 hover:text-white border border-gray-700 hover:border-red-500 px-4 py-3 rounded-full shadow-2xl flex items-center gap-2 transition group">
+            <button onclick="document.getElementById('lostModal').classList.remove('hidden'); document.getElementById('lostModal').classList.add('flex');" class="bg-[#18181b] hover:bg-red-900/80 text-gray-500 hover:text-white border border-gray-700 hover:border-red-500 px-4 py-3 rounded-full shadow-2xl flex items-center gap-2 transition group">
                 <span class="text-xs font-bold group-hover:block hidden transition-all duration-300">Tandai Menghilang</span>
                 <svg class="w-5 h-5 text-red-500 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
             </button>
-        </form>
         @endif
     </div>
 

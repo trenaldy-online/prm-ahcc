@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LeadController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\AnalyticsController;
 
 // 1. Halaman Depan: Jika belum login ke Login, jika sudah langsung ke Dashboard
 Route::get('/', function () {
@@ -16,6 +17,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Arahkan /dashboard ke Controller Lead (Kanban Board kita)
     Route::get('/dashboard', [LeadController::class, 'index'])->name('dashboard');
 
+    // Rute Analytics
+    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
+
     // Rute Operasional PRM (Simpan, Update, Export)
     Route::post('/leads', [LeadController::class, 'store'])->name('leads.store');
     Route::put('/leads/{lead}', [LeadController::class, 'update'])->name('leads.update');
@@ -25,6 +29,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Routes Setting
+    Route::post('/settings/reason', [SettingController::class, 'storeReason'])->name('settings.reason.store');
+    Route::delete('/settings/reason/{id}', [SettingController::class, 'destroyReason'])->name('settings.reason.destroy');
 });
 
 // Memanggil rute auth bawaan Breeze (Login, Register, dll)
@@ -50,3 +58,4 @@ Route::post('/leads/{lead}/log-wa', [LeadController::class, 'logWhatsapp'])->nam
     
 // UPDATE REMINDER (MODAL)
 Route::post('/leads/{lead}/reminder', [LeadController::class, 'updateReminder'])->name('leads.reminder.update');
+
